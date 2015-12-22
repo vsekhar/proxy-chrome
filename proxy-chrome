@@ -97,13 +97,12 @@ HOST=$(cat $SSH_CONFIG_FILE | grep "HostName" | tr -s ' ' | cut -f 3 -d ' ')
 log "Waiting for network"
 while ! ping -nc 1 $HOST &>/dev/null; do sleep 1; done
 log "Network up"
-sleep 2 # a bit more time to ensure sshd is up
 
 # start tunnel
 log "Establishing tunnel to instance at $IP"
 LOGIN_USER=$USER
 TUNNEL_PORT=9919
-ssh -M -S $TEMP_DIR/proxy-ssh-ctrl-socket -CfnNT -F "$SSH_CONFIG_FILE" -D $TUNNEL_PORT $LOGIN_USER@$SSH_HOST
+ssh -M -S $TEMP_DIR/proxy-ssh-ctrl-socket -o BatchMode=yes -o ConnectTimeout=5 -CfnNT -F "$SSH_CONFIG_FILE" -D $TUNNEL_PORT $LOGIN_USER@$SSH_HOST
 function stop_tunnel {
 	log "Stopping tunnel"
 	ssh -S $TEMP_DIR/proxy-ssh-ctrl-socket -F "$SSH_CONFIG_FILE" -O exit $LOGIN_USER@$SSH_HOST # "Exit request sent"
