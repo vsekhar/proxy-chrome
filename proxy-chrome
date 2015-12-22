@@ -12,7 +12,7 @@ set -o pipefail
 # logging from http://stackoverflow.com/a/7287873/608382
 log() { printf '%s: %s\n' "$(date)" "$*"; }
 error() { log "ERROR - $*" >&2; }
-fatal() { error "$@"; exit 1; }
+fatal() { log "FATAL - $*" >&2; exit 1; }
 
 # multiple traps from https://www.reddit.com/r/programming/comments/15mnxe/how_exit_traps_can_make_your_bash_scripts_way/c7o6yqf
 _ON_EXIT=( )
