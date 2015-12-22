@@ -27,16 +27,6 @@ _on_exit () {
     _ON_EXIT+=( "$1" )
 }
 
-# configure stash space
-BASE_TEMP_DIR=/tmp
-TEMP_DIR=$(mktemp -d $BASE_TEMP_DIR/proxy-tdir.XXXXXXX)
-function clean_up {
-	log "Local state of $(du -hs $TEMP_DIR | cut -f 1)"
-	log "Cleaning up"
-	srm -srf $TEMP_DIR
-}
-_on_exit clean_up
-
 # find Chrome in default installation points
 UNAME=$(uname)
 if [[ "$UNAME" == 'Darwin' ]]; then
@@ -49,6 +39,16 @@ if [[ ! -f "$CHROME" ]]; then
 	fatal "Chrome not found at '$CHROME'"
 fi
 log "Using Chrome at '$CHROME'"
+
+# configure stash space
+BASE_TEMP_DIR=/tmp
+TEMP_DIR=$(mktemp -d $BASE_TEMP_DIR/proxy-tdir.XXXXXXX)
+function clean_up {
+	log "Local state of $(du -hs $TEMP_DIR | cut -f 1)"
+	log "Cleaning up"
+	srm -srf "$TEMP_DIR" || log "srm not found, using non-secure delete"; rm -rf "$TEMP_DIR" || error "failed to clean up '$TEMP_DIR'"
+}
+_on_exit clean_up
 
 # start instance
 NAME=proxy-chrome-server-$RANDOM
