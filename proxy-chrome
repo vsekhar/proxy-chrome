@@ -32,6 +32,16 @@ UNAME=$(uname)
 if [[ "$UNAME" == 'Darwin' ]]; then
 	log "Mac OS detected"
 	CHROME=/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome
+elif [[ "$UNAME" == 'Linux' ]]; then
+	if [[ -f "/usr/bin/lsb_release" ]]; then
+		# something debian
+		DISTRO=$(/usr/bin/lsb_release -i | cut -f 2 -d ':' | tr -d '{ \t}')
+		if [[ "$DISTRO" == 'Ubuntu' ]] || [[ "$DISTRO" == 'Debian' ]]; then
+			log "Ubuntu detected"
+			CHROME=$(which google-chrome)
+		fi
+	# TODO: other distros
+	fi
 else
 	fatal "Operating system '$UNAME' not supported"
 fi
