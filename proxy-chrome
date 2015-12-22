@@ -62,12 +62,15 @@ _on_exit clean_up
 
 # start instance
 NAME=proxy-chrome-server-$RANDOM
+TYPE="f1-micro"
+IMAGE="coreos"
 log "Starting instance"
+INSTANCE_START_TIME=$(date +%s)
 gcloud compute instances create "$NAME" \
 	--boot-disk-auto-delete \
-	--image "ubuntu-15-10" \
+	--image "$IMAGE" \
 	--no-scopes \
-	--machine-type "f1-micro" \
+	--machine-type "$TYPE" \
 	--maintenance-policy "MIGRATE"
 
 function stop_instance {
@@ -103,6 +106,8 @@ log "Establishing tunnel"
 LOGIN_USER=$USER
 TUNNEL_PORT=9919
 ssh -M -S $TEMP_DIR/proxy-ssh-ctrl-socket -o BatchMode=yes -o ConnectTimeout=5 -CfnNT -F "$SSH_CONFIG_FILE" -D $TUNNEL_PORT $LOGIN_USER@$SSH_HOST
+INSTANCE_END_TIME=$(date +%s)
+log "Instance of $TYPE running $IMAGE took $(($INSTANCE_END_TIME - $INSTANCE_START_TIME))s from create to ssh"
 function stop_tunnel {
 	log "Stopping tunnel"
 	ssh -S $TEMP_DIR/proxy-ssh-ctrl-socket -F "$SSH_CONFIG_FILE" -O exit $LOGIN_USER@$SSH_HOST # "Exit request sent"
