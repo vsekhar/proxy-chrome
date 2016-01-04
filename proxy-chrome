@@ -42,7 +42,7 @@ log "Using Chrome at '$CHROME'"
 
 # configure stash space
 BASE_TEMP_DIR=/tmp
-TEMP_DIR=$(mktemp -d --tmpdir=$BASE_TEMP_DIR proxy-tdir.XXXXXXX)
+TEMP_DIR=$(mktemp -d "$BASE_TEMP_DIR/proxy-tdir.XXXXXXX")
 function clean_up {
 	log "Local state of $(du -hs $TEMP_DIR | cut -f 1)"
 	log "Cleaning up"
