@@ -90,6 +90,8 @@ done
 
 # get ssh config and addresses
 SSH_CONFIG_FILE=$(mktemp $TEMP_DIR/ssh_config.XXXXXX)
+
+# TODO: get or filter SSH configs for specific instance
 gcloud compute config-ssh --ssh-config-file="$SSH_CONFIG_FILE" > /dev/null
 SSH_HOST=$(cat $SSH_CONFIG_FILE | grep "^Host $NAME" | cut -f 2 -d ' ')
 HOST=$(cat $SSH_CONFIG_FILE | grep "HostName" | tr -s ' ' | cut -f 3 -d ' ')
