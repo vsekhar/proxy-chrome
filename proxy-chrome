@@ -121,5 +121,13 @@ _on_exit stop_tunnel
 
 # start clean incognito chrome session with proxy
 log "Starting chrome"
-"$CHROME" --incognito --proxy-server="socks5://localhost:$TUNNEL_PORT" --user-data-dir="$TEMP_DIR" --disable-background-mode --no-first-run --no-default-browser-check "https://www.youtube.com/watch?v=IDQA53TQJIc" 2>/dev/null
+"$CHROME" \
+	--incognito \
+	--proxy-server="socks5://localhost:$TUNNEL_PORT" \
+	--user-data-dir="$TEMP_DIR" \
+	--disable-background-mode \
+	--no-first-run \
+	--no-default-browser-check \
+	"https://www.youtube.com/watch?v=IDQA53TQJIc" \
+	2>/dev/null
 log "Chrome exited"
