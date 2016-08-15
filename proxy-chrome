@@ -65,6 +65,7 @@ NAME=proxy-chrome-server-$RANDOM
 TYPE="f1-micro"
 ZONE="us-east1-c"
 # ZONE="asia-east1-b"
+log "Using zone $ZONE"
 IMAGE="coreos"
 log "Starting instance"
 INSTANCE_START_TIME=$(date +%s)
