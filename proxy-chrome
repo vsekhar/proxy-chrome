@@ -111,7 +111,15 @@ log "Network up"
 log "Establishing tunnel"
 LOGIN_USER=$USER
 TUNNEL_PORT=9919
-ssh -M -S $TEMP_DIR/proxy-ssh-ctrl-socket -o BatchMode=yes -o ConnectTimeout=5 -CfnNT -F "$SSH_CONFIG_FILE" -D $TUNNEL_PORT $LOGIN_USER@$SSH_HOST
+ssh \
+	-M \
+	-S $TEMP_DIR/proxy-ssh-ctrl-socket \
+	-o BatchMode=yes \
+	-o ConnectTimeout=5 \
+	-CfnNT \
+	-F "$SSH_CONFIG_FILE" \
+	-D $TUNNEL_PORT \
+	$LOGIN_USER@$SSH_HOST
 INSTANCE_END_TIME=$(date +%s)
 log "Instance of $TYPE running $IMAGE took $(($INSTANCE_END_TIME - $INSTANCE_START_TIME))s from create to ssh"
 function stop_tunnel {
