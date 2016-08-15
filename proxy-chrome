@@ -48,7 +48,7 @@ function clean_up {
 	log "Cleaning up"
 	if which srm > /dev/null ; then
 		if [[ "$UNAME" == 'Darwin' ]]; then
-			SRMFLAGS='-szrf'
+			SRMFLAGS='-srf'
 		else
 			SRMFLAGS='-sllrf'
 		fi
