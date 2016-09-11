@@ -9,6 +9,14 @@
 set -e
 set -o pipefail
 
+NAME=proxy-chrome-server-$RANDOM
+TYPE="f1-micro"
+# TYPE="n1-standard-1"
+ZONE="us-central1-a"
+# ZONE="us-east1-c"
+# ZONE="asia-east1-a"
+IMAGE="coreos"
+
 # logging from http://stackoverflow.com/a/7287873/608382
 log() { printf '%s: %s\n' "$(date)" "$*"; }
 error() { log "ERROR - $*" >&2; }
@@ -40,33 +48,8 @@ if [[ ! -f "$CHROME" ]]; then
 fi
 log "Using Chrome at '$CHROME'"
 
-# configure stash space
-BASE_TEMP_DIR=/tmp
-TEMP_DIR=$(mktemp -d "$BASE_TEMP_DIR/proxy-tdir.XXXXXXX")
-function clean_up {
-	log "Local state of $(du -hs $TEMP_DIR | cut -f 1)"
-	log "Cleaning up"
-	if which srm > /dev/null ; then
-		if [[ "$UNAME" == 'Darwin' ]]; then
-			SRMFLAGS='-srf'
-		else
-			SRMFLAGS='-sllrf'
-		fi
-		srm $SRMFLAGS "$TEMP_DIR" || error "failed to clean up '$TEMP_DIR'"
-	else
-		log "srm not found, using non-secure delete"
-		rm -rf "$TEMP_DIR" || error "failed to clean up '$TEMP_DIR'"
-	fi
-}
-_on_exit clean_up
-
 # start instance
-NAME=proxy-chrome-server-$RANDOM
-TYPE="f1-micro"
-ZONE="us-east1-c"
-# ZONE="asia-east1-b"
 log "Using zone $ZONE"
-IMAGE="coreos"
 log "Starting instance"
 INSTANCE_START_TIME=$(date +%s)
 gcloud compute instances create "$NAME" \
@@ -93,6 +76,26 @@ while true; do
 	fi
 	sleep 5
 done
+
+# configure stash space
+BASE_TEMP_DIR=/tmp
+TEMP_DIR=$(mktemp -d "$BASE_TEMP_DIR/proxy-tdir.XXXXXXX")
+function clean_up {
+	log "Local state of $(du -hs $TEMP_DIR | cut -f 1)"
+	log "Cleaning up"
+	if which srm > /dev/null ; then
+		if [[ "$UNAME" == 'Darwin' ]]; then
+			SRMFLAGS='-srf'
+		else
+			SRMFLAGS='-sllrf'
+		fi
+		srm $SRMFLAGS "$TEMP_DIR" || error "failed to clean up '$TEMP_DIR'"
+	else
+		log "srm not found, using non-secure delete"
+		rm -rf "$TEMP_DIR" || error "failed to clean up '$TEMP_DIR'"
+	fi
+}
+_on_exit clean_up
 
 # get ssh config and addresses
 SSH_CONFIG_FILE=$(mktemp $TEMP_DIR/ssh_config.XXXXXX)
