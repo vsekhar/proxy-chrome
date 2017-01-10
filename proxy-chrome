@@ -120,6 +120,7 @@ ssh \
 	-S $TEMP_DIR/proxy-ssh-ctrl-socket \
 	-o BatchMode=yes \
 	-o ConnectTimeout=5 \
+	-o StrictHostKeyChecking=no \
 	-CfnNT \
 	-F "$SSH_CONFIG_FILE" \
 	-D $TUNNEL_PORT \
