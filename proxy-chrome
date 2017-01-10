@@ -12,8 +12,9 @@ set -o pipefail
 NAME=proxy-chrome-server-$RANDOM
 TYPE="f1-micro"
 # TYPE="n1-standard-1"
-ZONE="us-central1-a"
-# ZONE="us-east1-c"
+# ZONE="us-central1-a"
+# ZONE="us-east1-b"
+ZONE="us-west1-a"
 # ZONE="asia-east1-a"
 IMAGE="coreos"
 
