@@ -10,16 +10,17 @@ set -e
 set -o pipefail
 
 NAME=proxy-chrome-server-$RANDOM
-TYPE="f1-micro"
+TYPE="n1-standard-1"
 # TYPE="n1-standard-1"
-# ZONE="us-central1-a"
-# ZONE="us-east1-b"
-ZONE="us-west1-a"
+ZONE="us-central1-a"
+# ZONE="us-east4-b"
+# ZONE="us-west1-b"
 # ZONE="asia-east1-a"
-IMAGE="coreos"
+IMAGEFAMILY="coreos-stable"
+IMAGEPROJECT="coreos-cloud"
 
 # logging from http://stackoverflow.com/a/7287873/608382
-log() { printf '%s: %s\n' "$(date)" "$*"; }
+log() { printf '%s: %s\n' "$(date +"%T")" "$*"; }
 error() { log "ERROR - $*" >&2; }
 fatal() { log "FATAL - $*" >&2; exit 1; }
 
@@ -55,7 +56,8 @@ log "Starting instance"
 INSTANCE_START_TIME=$(date +%s)
 gcloud compute instances create "$NAME" \
 	--boot-disk-auto-delete \
-	--image "$IMAGE" \
+	--image-family "$IMAGEFAMILY" \
+	--image-project "$IMAGEPROJECT" \
 	--no-scopes \
 	--machine-type "$TYPE" \
 	--zone "$ZONE" \
@@ -98,38 +100,48 @@ function clean_up {
 }
 _on_exit clean_up
 
-# get ssh config and addresses
-SSH_CONFIG_FILE=$(mktemp $TEMP_DIR/ssh_config.XXXXXX)
-
-# TODO: get or filter SSH configs for specific instance
-gcloud compute config-ssh --ssh-config-file="$SSH_CONFIG_FILE" > /dev/null
-SSH_HOST=$(cat $SSH_CONFIG_FILE | grep "^Host $NAME" | cut -f 2 -d ' ')
-HOST=$(cat $SSH_CONFIG_FILE | grep "HostName" | tr -s ' ' | cut -f 3 -d ' ')
+HOST=$(gcloud compute instances list "$NAME" --format='value(networkInterfaces[0].accessConfigs[0].natIP)')
+log "Host: $HOST"
 
 # wait for network to come up
 log "Waiting for network"
 while ! ping -nc 1 $HOST &>/dev/null; do sleep 1; done
 log "Network up"
+sleep 10
 
-# start tunnel
+# start tunnel (SSH keys take time to propagate, so try a few times)
 log "Establishing tunnel"
-LOGIN_USER=$USER
 TUNNEL_PORT=9919
-ssh \
-	-M \
-	-S $TEMP_DIR/proxy-ssh-ctrl-socket \
-	-o BatchMode=yes \
-	-o ConnectTimeout=5 \
-	-o StrictHostKeyChecking=no \
-	-CfnNT \
-	-F "$SSH_CONFIG_FILE" \
-	-D $TUNNEL_PORT \
-	$LOGIN_USER@$SSH_HOST
+TRIES=3
+WAITTIME=5
+n=0
+until [ $n -ge $TRIES ]
+do
+  gcloud compute ssh "$NAME" \
+    --zone="$ZONE" \
+    --ssh-flag="-q" \
+    --ssh-flag="-M" \
+    --ssh-flag="-S $TEMP_DIR/proxy-ssh-ctrl-socket" \
+    --ssh-flag="-o BatchMode=yes" \
+    --ssh-flag="-o ConnectTimeout=10" \
+    --ssh-flag="-o StrictHostKeyChecking=no" \
+    --ssh-flag="-o UserKnownHostsFile=/dev/null" \
+    --ssh-flag="-D $TUNNEL_PORT" \
+    --ssh-flag="-CfnNT" && break
+  log "Retrying"
+  n=$[$n+1]
+  sleep $WAITTIME
+done
+
 INSTANCE_END_TIME=$(date +%s)
 log "Instance of $TYPE running $IMAGE took $(($INSTANCE_END_TIME - $INSTANCE_START_TIME))s from create to ssh"
 function stop_tunnel {
 	log "Stopping tunnel"
-	ssh -S $TEMP_DIR/proxy-ssh-ctrl-socket -F "$SSH_CONFIG_FILE" -O exit $LOGIN_USER@$SSH_HOST # "Exit request sent"
+	gcloud compute ssh "$NAME" \
+  --zone="$ZONE" \
+  --ssh-flag="-q" \
+  --ssh-flag="-S $TEMP_DIR/proxy-ssh-ctrl-socket" \
+  --ssh-flag="-O exit"
 }
 _on_exit stop_tunnel
 
@@ -142,6 +154,6 @@ log "Starting chrome"
 	--disable-background-mode \
 	--no-first-run \
 	--no-default-browser-check \
-	"https://www.youtube.com/watch?v=IDQA53TQJIc" \
+	"https://www.youtube.com/watch?v=RDfjXj5EGqI" \
 	2>/dev/null
 log "Chrome exited"
